@@ -27,6 +27,11 @@ public class Runner implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        if (args.length == 0) {
+            System.err.println("Please provide the directory path where the DDL files can be found as a program argument!");
+            return;
+        }
+
         log.info("Looking for DDL Files in [{}]", args[0]);
         AtomicInteger cnt = new AtomicInteger();
 
