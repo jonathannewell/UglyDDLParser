@@ -23,7 +23,8 @@ public class DDLFileReader {
     private String tableName;
     private String database;
     private String schema;
-    private List<String> schemas = List.of("dbo", "rae");
+    private Index index;
+    private List<String> schemas = List.of("dbo", "rae", "subm");
     private List<Column> columns = new ArrayList<>();
     private int recordSize;
 
@@ -39,13 +40,14 @@ public class DDLFileReader {
             throw new IllegalArgumentException("File [" + filename + "] does not meet naming convention requirements!");
         try {
             int pointer1 = filename.indexOf(DELIMITER);
-            Index indexes = findSchema(pointer1);
-            this.database = filename.substring(0, indexes.first - 1);
-            indexes.first = indexes.second + 1;
-            indexes.second = filename.indexOf(".txt", indexes.first);
-            this.tableName = filename.substring(indexes.first, indexes.second);
+            this.index = findSchema(pointer1);
+            this.database = filename.substring(0, index.first - 1);
+            index.first = index.second + 1;
+            index.second = filename.indexOf(".txt", index.first);
+            this.tableName = filename.substring(index.first, index.second);
         } catch (Throwable t) {
             log.error("Failed Parsing Filename [{}]! Details: {}", filename, t.getMessage());
+            throw t;
         }
     }
 
@@ -53,6 +55,11 @@ public class DDLFileReader {
 
         AtomicBoolean shouldParseColumn = new AtomicBoolean(false);
         AtomicBoolean isView = new AtomicBoolean(false);
+
+        if(!index.schemaFound) {
+            log.error("Unable to Parse File [{}]. Schema was not found and therefore Create Table Statement cannot be validated...", filename);
+            return;
+        }
 
         Files.lines(file.toPath()).forEach(line -> {
             if (shouldParseColumn.get()) {
@@ -88,14 +95,24 @@ public class DDLFileReader {
 
     private Index findSchema(int pointer) {
         Index i = new Index();
-        i.first = pointer + 1;
-        i.second = filename.indexOf(DELIMITER, i.first);
-        this.schema = filename.substring(i.first, i.second);
-        if (schemas.contains(schema.toLowerCase())) {
-
+        try {
+            i.first = pointer + 1;
+            i.second = filename.indexOf(DELIMITER, i.first);
+            if (i.first > filename.length() || i.second == -1){
+                log.error("Schema Not Found in Filename [{}]...is this schema in the valid schema list???", filename);
+                return i;
+            }
+            this.schema = filename.substring(i.first, i.second);
+            if (schemas.contains(schema.toLowerCase())) {
+                i.schemaFound = true;
+                return i;
+            }
+            return findSchema(i.second);
+        }
+        catch(Throwable t){
+            log.error("Error Finding Schema! Details: {}", t.getMessage());
             return i;
         }
-        return findSchema(i.second);
     }
 
     public boolean hasDateColumns(){
@@ -112,6 +129,7 @@ public class DDLFileReader {
     private static class Index {
         private int first;
         private int second;
+        private boolean schemaFound;
     }
 
     @Data
