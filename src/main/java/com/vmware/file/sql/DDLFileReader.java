@@ -26,11 +26,9 @@ public class DDLFileReader {
     private List<String> schemas = List.of("dbo", "rae");
     private List<Column> columns = new ArrayList<>();
     private int recordSize;
-    private PrintWriter writer;
 
-    public DDLFileReader(File file, PrintWriter w) {
+    public DDLFileReader(File file) {
         this.file = file;
-        this.writer = w;
         this.filename = file.getName();
         if (!file.exists()) throw new IllegalArgumentException("File [" + filename + "] does not exist!");
         parseFileName();
@@ -82,7 +80,10 @@ public class DDLFileReader {
         if (recordSize == 0 && !isView.get()) {
             log.warn("Did not correctly determine record size! Uh Oh!");
         }
-        writer.printf("%s,%s,%s,%d\n", database, schema, tableName, recordSize);
+    }
+
+    public String getInfo(){
+        return String.format("%s,%s,%s,%d,%s", database, schema, tableName, recordSize, hasDateColumns());
     }
 
     private Index findSchema(int pointer) {
@@ -95,6 +96,16 @@ public class DDLFileReader {
             return i;
         }
         return findSchema(i.second);
+    }
+
+    public boolean hasDateColumns(){
+        for(Column c:columns){
+            if (c.name.equalsIgnoreCase("CreatedOn") || c.name.equalsIgnoreCase("EditedOn"))  {
+               return true;
+            }
+        }
+
+        return false;
     }
 
     @Data

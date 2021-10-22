@@ -34,24 +34,30 @@ public class Runner implements CommandLineRunner {
 
         log.info("Looking for DDL Files in [{}]", args[0]);
         AtomicInteger cnt = new AtomicInteger();
-
+        AtomicInteger noCnt = new AtomicInteger();
         PrintWriter writer = new PrintWriter(new FileWriter( "Table-sizes.csv"));
-
+        PrintWriter noDateFiles = new PrintWriter(new FileWriter( "Table-With-No-Date-Fields.csv"));
         Files.list(Path.of(args[0])).forEach(path -> {
             File f = path.toFile();
             if (!f.isDirectory()) {
-                DDLFileReader reader = new DDLFileReader(path.toFile(), writer);
-                log.debug("File [{}] -> DB[{}] Schema[{}] Table[{}]", reader.getFilename(), reader.getDatabase(), reader.getSchema(), reader.getTableName());
+                DDLFileReader ddlFile = new DDLFileReader(path.toFile());
+                log.debug("File [{}] -> DB[{}] Schema[{}] Table[{}]", ddlFile.getFilename(), ddlFile.getDatabase(), ddlFile.getSchema(), ddlFile.getTableName());
                 cnt.getAndIncrement();
                 try {
-                    reader.parse();
+                    ddlFile.parse();
+                    writer.println(ddlFile.getInfo());
+                    if (!ddlFile.hasDateColumns()) {
+                        noCnt.getAndIncrement();
+                        noDateFiles.println(ddlFile.getInfo());
+                    }
                 }
                 catch(Throwable t){
-                    log.error("Error parsing file [{}] Details: {}", reader.getFilename(),t.getMessage());
+                    log.error("Error parsing file [{}] Details: {}", ddlFile.getFilename(),t.getMessage());
                 }
             }
         });
         writer.close();
-        log.info("Found [{}] SQL Files!", cnt.get());
+        noDateFiles.close();
+        log.info("Found [{}] Total SQL Files and [{}] do not have date fields", cnt.get(), noCnt.get());
     }
 }

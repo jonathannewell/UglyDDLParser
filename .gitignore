@@ -15,6 +15,9 @@ build
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
+Table-sizes.csv
+Table-With-No-Date-Fields.csv
+
 # Package Files #
 *.jar
 *.war
