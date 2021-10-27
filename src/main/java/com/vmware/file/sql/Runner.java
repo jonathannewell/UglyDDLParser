@@ -9,6 +9,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -34,7 +36,8 @@ public class Runner implements CommandLineRunner {
 
         log.info("Looking for DDL Files in [{}]", args[0]);
         AtomicInteger cnt = new AtomicInteger();
-        AtomicInteger noCnt = new AtomicInteger();
+        AtomicInteger cntLargeRowSize = new AtomicInteger();
+        AtomicInteger cntWithOutDateFields = new AtomicInteger();
         PrintWriter writer = new PrintWriter(new FileWriter("Table-sizes.csv"));
         PrintWriter noDateFiles = new PrintWriter(new FileWriter("Table-With-No-Date-Fields.csv"));
         Files.list(Path.of(args[0])).forEach(path -> {
@@ -48,8 +51,11 @@ public class Runner implements CommandLineRunner {
                     ddlFile.parse();
                     writer.println(ddlFile.getInfo());
                     if (!ddlFile.hasDateColumns()) {
-                        noCnt.getAndIncrement();
+                        cntWithOutDateFields.getAndIncrement();
                         noDateFiles.println(ddlFile.getInfo());
+                    }
+                    if (ddlFile.getRecordSize() > 8000){
+                        cntLargeRowSize.getAndIncrement();
                     }
                 } catch (Throwable t) {
                     log.error("Error parsing file [{}] Details: {}", path.getFileName(), t.getMessage());
@@ -58,6 +64,14 @@ public class Runner implements CommandLineRunner {
         });
         writer.close();
         noDateFiles.close();
-        log.info("Found [{}] Total SQL Files and [{}] do not have date fields", cnt.get(), noCnt.get());
+
+        int withDateFields = cnt.get() - cntWithOutDateFields.get();
+
+        BigDecimal total = new BigDecimal(cnt.get());
+        BigDecimal oneHundred = new BigDecimal(100);
+        BigDecimal pctWithDate = new BigDecimal(withDateFields).divide(total,2,RoundingMode.HALF_DOWN).multiply(oneHundred).setScale(0);
+        BigDecimal pctWithoutDate = new BigDecimal(cntWithOutDateFields.get()).divide(total, 2,RoundingMode.HALF_DOWN).multiply(oneHundred).setScale(0);
+        BigDecimal pctLargeRow = new BigDecimal(cntLargeRowSize.get()).divide(total, 2,RoundingMode.HALF_DOWN).multiply(oneHundred).setScale(0);
+        log.info("Found [{}] Total SQL Files. [{} or {}%] with date fields, [{} or {}%] without date fields, [{} or {}%] with large row sizes", cnt.get(), withDateFields, pctWithDate, cntWithOutDateFields.get(),pctWithoutDate, cntLargeRowSize.get(),pctLargeRow);
     }
 }

@@ -90,7 +90,7 @@ public class DDLFileReader {
     }
 
     public String getInfo(){
-        return String.format("%s,%s,%s,%d,%s", database, schema, tableName, recordSize, hasDateColumns());
+        return String.format("%s,%s,%s,%d,%s,%d", database, schema, tableName, recordSize, hasDateColumns(), columns.size());
     }
 
     private Index findSchema(int pointer) {
