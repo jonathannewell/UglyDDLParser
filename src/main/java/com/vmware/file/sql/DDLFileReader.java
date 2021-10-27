@@ -130,7 +130,18 @@ public class DDLFileReader {
         for(Column c:columns){
             if (c.name.equalsIgnoreCase("Active") ||
                 c.name.equalsIgnoreCase("Soft_Delete_Flag") ||
-                c.name.equalsIgnoreCase("ActiveFlag")
+                c.name.equalsIgnoreCase("ActiveFlag") ||
+                c.name.equalsIgnoreCase("NotActiveReasonID") ||
+                c.name.equalsIgnoreCase("KeepRecord") ||
+                c.name.equalsIgnoreCase("DateEnd") ||
+                c.name.equalsIgnoreCase("EndDate") ||
+                c.name.equalsIgnoreCase("ActivateDate") ||
+                c.name.equalsIgnoreCase("DeactivateDate") ||
+                c.name.equalsIgnoreCase("LinkDateEnd") ||
+                c.name.equalsIgnoreCase("SoftDelete") ||
+                c.name.equalsIgnoreCase("ReportAvailable") ||
+                c.name.equalsIgnoreCase("ActiveEnd") ||
+                c.name.equalsIgnoreCase("Soft_Delete_Date")
             )  {
                 return true;
             }
