@@ -19,6 +19,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 public class Runner implements CommandLineRunner {
 
+    private static int LARGE_ROW_SIZE = 8000;
+    private static int HIGH_COLUMN_CNT = 20;
+
     public static void main(String... args) {
 
         log.info("Starting SQL File Parsing Run...");
@@ -54,7 +57,7 @@ public class Runner implements CommandLineRunner {
                         cntWithOutDateFields.getAndIncrement();
                         noDateFiles.println(ddlFile.getInfo());
                     }
-                    if (ddlFile.getRecordSize() > 8000){
+                    if (ddlFile.getRecordSize() > LARGE_ROW_SIZE || ddlFile.getColumns().size() > HIGH_COLUMN_CNT){
                         cntLargeRowSize.getAndIncrement();
                     }
                 } catch (Throwable t) {
@@ -72,6 +75,6 @@ public class Runner implements CommandLineRunner {
         BigDecimal pctWithDate = new BigDecimal(withDateFields).divide(total,2,RoundingMode.HALF_DOWN).multiply(oneHundred).setScale(0);
         BigDecimal pctWithoutDate = new BigDecimal(cntWithOutDateFields.get()).divide(total, 2,RoundingMode.HALF_DOWN).multiply(oneHundred).setScale(0);
         BigDecimal pctLargeRow = new BigDecimal(cntLargeRowSize.get()).divide(total, 2,RoundingMode.HALF_DOWN).multiply(oneHundred).setScale(0);
-        log.info("Found [{}] Total SQL Files. [{} or {}%] with date fields, [{} or {}%] without date fields, [{} or {}%] with large row sizes", cnt.get(), withDateFields, pctWithDate, cntWithOutDateFields.get(),pctWithoutDate, cntLargeRowSize.get(),pctLargeRow);
+        log.info("Found [{}] Total SQL Files. [{} or {}%] with date fields, [{} or {}%] without date fields, [{} or {}%] with large row sizes or high column counts", cnt.get(), withDateFields, pctWithDate, cntWithOutDateFields.get(),pctWithoutDate, cntLargeRowSize.get(),pctLargeRow);
     }
 }
