@@ -41,6 +41,7 @@ public class Runner implements CommandLineRunner {
         AtomicInteger cnt = new AtomicInteger();
         AtomicInteger cntLargeRowSize = new AtomicInteger();
         AtomicInteger cntWithOutDateFields = new AtomicInteger();
+        AtomicInteger cntSoftDelete = new AtomicInteger();
         PrintWriter writer = new PrintWriter(new FileWriter("Table-sizes.csv"));
         PrintWriter noDateFiles = new PrintWriter(new FileWriter("Table-With-No-Date-Fields.csv"));
         Files.list(Path.of(args[0])).forEach(path -> {
@@ -60,6 +61,7 @@ public class Runner implements CommandLineRunner {
                     if (ddlFile.getRecordSize() > LARGE_ROW_SIZE || ddlFile.getColumns().size() > HIGH_COLUMN_CNT){
                         cntLargeRowSize.getAndIncrement();
                     }
+                    if (ddlFile.isSoftDelete()) cntSoftDelete.getAndIncrement();
                 } catch (Throwable t) {
                     log.error("Error parsing file [{}] Details: {}", path.getFileName(), t.getMessage());
                 }
@@ -75,6 +77,8 @@ public class Runner implements CommandLineRunner {
         BigDecimal pctWithDate = new BigDecimal(withDateFields).divide(total,2,RoundingMode.HALF_DOWN).multiply(oneHundred).setScale(0);
         BigDecimal pctWithoutDate = new BigDecimal(cntWithOutDateFields.get()).divide(total, 2,RoundingMode.HALF_DOWN).multiply(oneHundred).setScale(0);
         BigDecimal pctLargeRow = new BigDecimal(cntLargeRowSize.get()).divide(total, 2,RoundingMode.HALF_DOWN).multiply(oneHundred).setScale(0);
-        log.info("Found [{}] Total SQL Files. [{} or {}%] with date fields, [{} or {}%] without date fields, [{} or {}%] with large row sizes or high column counts", cnt.get(), withDateFields, pctWithDate, cntWithOutDateFields.get(),pctWithoutDate, cntLargeRowSize.get(),pctLargeRow);
+        BigDecimal pctSoftDelete = new BigDecimal(cntSoftDelete.get()).divide(total, 2,RoundingMode.HALF_DOWN).multiply(oneHundred).setScale(0);
+
+        log.info("Found [{}] Total SQL Files. [{} or {}%] with date fields, [{} or {}%] without date fields, [{} or {}%] with large row sizes or high column counts, [{} or {}%] support soft deletes", cnt.get(), withDateFields, pctWithDate, cntWithOutDateFields.get(),pctWithoutDate, cntLargeRowSize.get(),pctLargeRow, cntSoftDelete.get(), pctSoftDelete);
     }
 }

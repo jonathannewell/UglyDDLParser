@@ -117,8 +117,22 @@ public class DDLFileReader {
 
     public boolean hasDateColumns(){
         for(Column c:columns){
-            if (c.name.equalsIgnoreCase("CreatedOn") || c.name.equalsIgnoreCase("EditedOn"))  {
+            if (c.name.equalsIgnoreCase("CreatedOn") ||
+                c.name.equalsIgnoreCase("EditedOn"))  {
                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public boolean isSoftDelete(){
+        for(Column c:columns){
+            if (c.name.equalsIgnoreCase("Active") ||
+                c.name.equalsIgnoreCase("Soft_Delete_Flag") ||
+                c.name.equalsIgnoreCase("ActiveFlag")
+            )  {
+                return true;
             }
         }
 
